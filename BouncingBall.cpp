@@ -27,9 +27,9 @@ bool showGrid = true;
 
 // draws a simple grid
 void makeGrid() {
-  glColor3f(0.0, 0.0, 0.0);
+  glColor3f(0.0f, 0.0f, 0.0f);
 
-  glLineWidth(1.0);
+  glLineWidth(1.0f);
 
   for (float i=-12; i<12; i++) {
     for (float j=-12; j<12; j++) {
@@ -57,7 +57,7 @@ void makeGrid() {
     }
   }
 
-  glLineWidth(2.0);
+  glLineWidth(2.0f);
   glBegin(GL_LINES);
   glVertex3f(-12, 0, 0);
   glVertex3f(12, 0, 0);
@@ -66,22 +66,122 @@ void makeGrid() {
   glVertex3f(0, 0, -12);
   glVertex3f(0, 0, 12);
   glEnd();
-  glLineWidth(1.0);
+  glLineWidth(1.0f);
+}
+
+void getVisibleFaces(bool *visible_faces, Vector3d *face_positions) {
+  // set max distance to camera to the distance from the front face to the camera
+  double test_distance_to_camera;
+  double min_distance_to_camera = (*face_positions - camera->Pos).norm();
+  int remove_face = 0;
+
+  for (int i=1; i < 6; ++i) {
+    test_distance_to_camera = (*(face_positions + i) - camera->Pos).norm();
+    if (test_distance_to_camera < min_distance_to_camera) {
+      min_distance_to_camera = test_distance_to_camera;
+      remove_face = i;
+    }
+  }
+
+  *(visible_faces + remove_face) = false;
+}
+
+void makeBox() {
+  bool visible_faces[6] = {true, true, true, true, true, true};
+  Vector3d face_positions[6] = {Vector3d( 0.0f, 0.0f, -0.5f),   // back face
+                                Vector3d( 0.0f, 0.0f, 0.5f),    // front face
+                                Vector3d( 0.5f, 0.0f, 0.0f),    // right face
+                                Vector3d(-0.5f, 0.0f, 0.0f),    // left face
+                                Vector3d( 0.0f, 0.5f, 0.0f),    // top face
+                                Vector3d( 0.0f, -0.5f, 0.0f)};  // bottom face
+
+  getVisibleFaces(visible_faces, face_positions);
+
+  if (visible_faces[0]) {
+    // back face
+    glBegin(GL_POLYGON);
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glVertex3f(2.0f, -2.0f, -2.0f);
+    glVertex3f(2.0f, 2.0f, -2.0f);
+    glVertex3f(-2.0f, 2.0f, -2.0f);
+    glVertex3f(-2.0f, -2.0f, -2.0f);
+    glEnd();
+  }
+
+  if (visible_faces[1]) {
+    // front face
+    glBegin(GL_POLYGON);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(2.0f, -2.0f, 2.0f);
+    glVertex3f(2.0f, 2.0f, 2.0f);
+    glVertex3f(-2.0f, 2.0f, 2.0f);
+    glVertex3f(-2.0f, -2.0f, 2.0f);
+    glEnd();
+  }
+
+  if (visible_faces[2]) {
+    // right face
+    glBegin(GL_POLYGON);
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(2.0f, -2.0f, -2.0f);
+    glVertex3f(2.0f, 2.0f, -2.0f);
+    glVertex3f(2.0f, 2.0f, 2.0f);
+    glVertex3f(2.0f, -2.0f, 2.0f);
+    glEnd();
+  }
+
+  if (visible_faces[3]) {
+    // left face
+    glBegin(GL_POLYGON);
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(-2.0f, -2.0f, 2.0);
+    glVertex3f(-2.0f, 2.0f, 2.0f);
+    glVertex3f(-2.0f, 2.0, -2.0f);
+    glVertex3f(-2.0f, -2.0f, -2.0f);
+    glEnd();
+  }
+
+  if (visible_faces[4]) {
+    // top face
+    glBegin(GL_POLYGON);
+    glColor3f(0.0f, 1.0f, 1.0f);
+    glVertex3f(2.0f, 2.0f, 2.0f);
+    glVertex3f(2.0f, 2.0f, -2.0f);
+    glVertex3f(-2.0f, 2.0f, -2.0f);
+    glVertex3f(-2.0f, 2.0f, 2.0f);
+    glEnd();
+  }
+
+  if (visible_faces[5]) {
+    // bottom face
+    glBegin(GL_POLYGON);
+    glColor3f(1.0f, 1.0f, 0.0f);
+    glVertex3f(2.0f, -2.0f, -2.0f);
+    glVertex3f(2.0f, -2.0f, 2.0f);
+    glVertex3f(-2.0f, -2.0f, 2.0f);
+    glVertex3f(-2.0f, -2.0f, -2.0f);
+    glEnd();
+  }
 }
 
 void init() {
   // set up camera
   // parameters are eye point, aim point, up vector
-  camera = new Camera(Vector3d(0, 32, 27), Vector3d(0, 0, 0), 
+  camera = new Camera(Vector3d(0, 5, 5), Vector3d(0, 0, 0),
 		      Vector3d(0, 1, 0));
 
+//  camera->Initialize();
+
   // grey background for window
-  glClearColor(0.62, 0.62, 0.62, 0.0);
+  glClearColor(0.62, 0.62, 0.62, 0.0f);
   glShadeModel(GL_SMOOTH);
-  glDepthRange(0.0, 1.0);
+  glDepthRange(0.0f, 1.0f);
 
   glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LEQUAL);
   glEnable(GL_NORMALIZE);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void PerspDisplay() {
@@ -99,9 +199,8 @@ void PerspDisplay() {
   //
   // here is where you would draw your scene!
   //
-  glTranslatef(0, 3.5, 0);
-  glutWireTeapot(5);
-  
+  makeBox();
+  glFlush();
   glutSwapBuffers();
 }
 
