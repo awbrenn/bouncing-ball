@@ -11,6 +11,7 @@ Solver::Solver(float box_width, float box_height, float box_depth, Vector3d ball
   h = H;
 }
 
+
 int Solver::detectCollision(Vector3d ball_pos, Vector3d new_ball_pos, float *s) {
   int collision_wall = -1; // -1 indicates no collision
   bool collision_occurred = false;
@@ -25,9 +26,6 @@ int Solver::detectCollision(Vector3d ball_pos, Vector3d new_ball_pos, float *s) 
     wall_location = box->wall_locations[i];
     wall_normal = box->wall_normals[i];
 
-
-    /* TODO Fix issues with box walls. I'm not storing the information correctly
-       in the box constructor. */
     distance_to_wall = (float) ((ball_pos - wall_location) * wall_normal);
     total_distance = (float) ((ball_pos - new_ball_pos) * wall_normal);
 
@@ -49,10 +47,14 @@ int Solver::detectCollision(Vector3d ball_pos, Vector3d new_ball_pos, float *s) 
   return collision_wall;
 }
 
+// TODO Add radius to ball.
+// TODO add multiple collision detection.
 void Solver::update() {
   Vector3d pos_new, pos_collision,
            velocity_new, velocity_collison,
            velocity_normal, velocity_tangent;
+  float timestep_remaining = h;
+  float timestep = timestep_remaining; // try to simulate a full timestep
   int collision_wall;
   float s; // fraction between distance of wall to ball
            // and total distance travelled in normal direction
@@ -63,7 +65,7 @@ void Solver::update() {
 
   collision_wall = detectCollision(ball->pos, pos_new, &s);
   if (collision_wall != -1) { // collision occurred!
-    velocity_collison = ball->velocity + s * h * acceleration;
+    velocity_collison = ball->velocity + h * acceleration;
     pos_collision = ball->pos + s * h * ball->velocity;
     velocity_normal = (velocity_collison * box->wall_normals[collision_wall]) * box->wall_normals[collision_wall];
     velocity_tangent = velocity_collison - velocity_normal;
