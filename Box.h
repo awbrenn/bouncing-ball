@@ -13,7 +13,7 @@ class Box {
     std::vector<Vector3d> wall_locations;
     std::vector<Vector3d> wall_normals;
 
-    Box(float width, float height, float depth);
+    Box(double width, double height, double depth);
 };
 
 

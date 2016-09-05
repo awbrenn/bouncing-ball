@@ -9,16 +9,21 @@
 
 class Solver {
   private:
-  int detectCollision(Vector3d ball_pos, Vector3d new_ball_pos, float *s);
+  int detectCollision(Vector3d ball_pos, Vector3d new_ball_pos, double *s);
 
   public:
     Ball *ball;
     Box *box;
-    float h; // timestep
+    double h; // timestep
+    int substeps;
     Vector3d acceleration = Vector3d(0.0f, -9.8f, 0.0f);
+    double cr;
+    double cf;
 
     // constructors
-    Solver(float box_width, float box_height, float box_depth, Vector3d ball_position, float ball_radius, float h);
+    Solver(double box_width, double box_height, double box_depth,
+           Vector3d ball_position, double ball_radius, double h,
+           int substeps, double cr, double cf);
 
     // member functions
     void update();

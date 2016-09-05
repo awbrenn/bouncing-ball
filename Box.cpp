@@ -4,7 +4,7 @@
 
 #include "Box.h"
 
-Box::Box(float width, float height, float depth) {
+Box::Box(double width, double height, double depth) {
   width /= 2;
   height /= 2;
   depth /= 2;

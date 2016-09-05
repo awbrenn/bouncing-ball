@@ -9,6 +9,7 @@
 //
 #include "Camera.h"
 #include "Solver.h"
+#include <cstdio>
 
 #ifdef __APPLE__
 #  pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -33,8 +34,8 @@ void makeGrid() {
 
   glLineWidth(1.0f);
 
-  for (float i=-12; i<12; i++) {
-    for (float j=-12; j<12; j++) {
+  for (double i=-12; i<12; i++) {
+    for (double j=-12; j<12; j++) {
       glBegin(GL_LINES);
       glVertex3f(i, 0, j);
       glVertex3f(i, 0, j+1);
@@ -177,14 +178,42 @@ void initCamera() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void initSimulation() {
-  solver = new Solver(4.0f, 4.0f, 4.0f, Vector3d(0.0f, 0.0f, 0.0f), 0.2f, 0.1f);
+void initSimulation(char *param_filename) {
+  FILE *paramfile;
+  double box_width, box_height, box_depth,
+         ball_x, ball_y, ball_z, ball_radius,
+         timestep, coeff_restitution, coeff_friction;
+  int substeps;
+
+  if((paramfile = std::fopen(param_filename, "r")) == NULL) {
+    fprintf(stderr, "error opening parameter file %s", param_filename);
+    exit(1);
+  }
+
+  if(fscanf(paramfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
+            &box_width, &box_height, &box_depth,
+            &ball_x, &ball_y, &ball_z,
+            &ball_radius, &timestep, &substeps,
+            &coeff_restitution, &coeff_friction) != 11){
+    fprintf(stderr, "error reading parameter file %s\n", param_filename);
+    exit(1);
+  }
+
+  fclose(paramfile);
+
+  solver = new Solver(box_width, box_height, box_depth,
+                      Vector3d(ball_x, ball_y, ball_z),
+                      ball_radius, timestep, substeps,
+                      coeff_restitution, coeff_friction);
 }
 
 void simulateBall() {
-  solver->update();
+  for(int i = 0; i < 500; ++i) {
+    solver->update();
+  }
   glutPostRedisplay();
 }
+
 
 void perspDisplay() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -206,11 +235,11 @@ void perspDisplay() {
 
   makeBox();
 
-  glPointSize(10.0f);
-  glBegin(GL_POINTS);
-  glColor3f(1.0f, 0.5f, 1.0f);
-  glVertex3f(solver->ball->pos.x, solver->ball->pos.y, solver->ball->pos.z);
-  glEnd();
+  glColor3f(1,0,0.5);
+  GLUquadric *quad;
+  quad = gluNewQuadric();
+  glTranslatef(solver->ball->pos.x,solver->ball->pos.y,solver->ball->pos.z);
+  gluSphere(quad,solver->ball->radius,100,20);
 
   glFlush();
   glutSwapBuffers();
@@ -259,7 +288,7 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
     break;
 
   case 'd':
-    solver->acceleration = {0.0f, 9.8f, 0.0f};
+    solver->acceleration = {9.8f, 0.0f, 0.0f};
     cout << "Gravity is now right" << endl;
     break;
 
@@ -273,7 +302,7 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
     cout << "Gravity is now back" << endl;
     break;
 
-    case 'q': case 'Q':	// q or esc - quit
+  case 'q': case 'Q':	// q or esc - quit
   case 27:		// esc
     exit(0);
   }
@@ -282,6 +311,11 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
 }
 
 int main(int argc, char *argv[]) {
+
+  if(argc != 2){
+    fprintf(stderr, "usage: bouncing_ball paramfile\n");
+    exit(1);
+  }
 
   // set up opengl window
   glutInit(&argc, argv);
@@ -292,7 +326,8 @@ int main(int argc, char *argv[]) {
 
   // initialize the camera and such
   initCamera();
-  initSimulation();
+
+  initSimulation(argv[1]);
 
   // set up opengl callback functions
   glutDisplayFunc(perspDisplay);

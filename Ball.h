@@ -9,11 +9,11 @@
 
 class Ball {
   public:
-    Ball(Vector3d pos, float radius);
+    Ball(Vector3d pos, double radius);
 
     Vector3d pos;
     Vector3d velocity;
-    float radius;
+    double radius;
 };
 
 
