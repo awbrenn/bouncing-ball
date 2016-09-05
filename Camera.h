@@ -30,15 +30,10 @@ private:
   double DefaultAzim;
   double DefaultElev;
 
-  double CurrentAzim;
-  double CurrentElev;
-
   void Initialize();
   void ComputeCoords(const Vector3d &P, const Vector3d &A, const Vector3d &U);
 
   int inverted; //flag to invert the coordinate
-  double TranslateX;
-  double TranslateY;
 
   double Zoom;
 
@@ -46,6 +41,11 @@ public:
   Vector3d Pos;
   Vector3d Aim;
   Vector3d Up;
+
+  double TranslateX;
+  double TranslateY;
+  double CurrentAzim;
+  double CurrentElev;
 
   float NearPlane;
   float FarPlane;

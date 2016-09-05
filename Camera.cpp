@@ -285,6 +285,10 @@ void Camera::HandleMouseEvent(int button, int state, int x, int y) {
   }
 }
 
+//Vector3d Camera::getCameraAim() {
+//
+//}
+
 
 /*
  * Mouse Motion handler function... should be called in the

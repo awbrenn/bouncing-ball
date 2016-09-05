@@ -8,6 +8,7 @@
 // Minor Modifications by Yujie Shu, 2012
 //
 #include "Camera.h"
+#include "Solver.h"
 
 #ifdef __APPLE__
 #  pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -22,6 +23,7 @@ int HEIGHT = 480;
 int persp_win;
 
 Camera *camera;
+Solver *solver;
 
 bool showGrid = true;
 
@@ -69,14 +71,14 @@ void makeGrid() {
   glLineWidth(1.0f);
 }
 
-void getVisibleFaces(bool *visible_faces, Vector3d *face_positions) {
+void getVisibleFaces(bool *visible_faces, std::vector<Vector3d> face_positions) {
   // set max distance to camera to the distance from the front face to the camera
   double test_distance_to_camera;
-  double min_distance_to_camera = (*face_positions - camera->Pos).norm();
+  double min_distance_to_camera = (face_positions[0] - camera->Pos).norm();
   int remove_face = 0;
 
   for (int i=1; i < 6; ++i) {
-    test_distance_to_camera = (*(face_positions + i) - camera->Pos).norm();
+    test_distance_to_camera = (face_positions[i] - camera->Pos).norm();
     if (test_distance_to_camera < min_distance_to_camera) {
       min_distance_to_camera = test_distance_to_camera;
       remove_face = i;
@@ -88,14 +90,7 @@ void getVisibleFaces(bool *visible_faces, Vector3d *face_positions) {
 
 void makeBox() {
   bool visible_faces[6] = {true, true, true, true, true, true};
-  Vector3d face_positions[6] = {Vector3d( 0.0f, 0.0f, -0.5f),   // back face
-                                Vector3d( 0.0f, 0.0f, 0.5f),    // front face
-                                Vector3d( 0.5f, 0.0f, 0.0f),    // right face
-                                Vector3d(-0.5f, 0.0f, 0.0f),    // left face
-                                Vector3d( 0.0f, 0.5f, 0.0f),    // top face
-                                Vector3d( 0.0f, -0.5f, 0.0f)};  // bottom face
-
-  getVisibleFaces(visible_faces, face_positions);
+  getVisibleFaces(visible_faces, solver->box->wall_locations);
 
   if (visible_faces[0]) {
     // back face
@@ -164,13 +159,11 @@ void makeBox() {
   }
 }
 
-void init() {
+void initCamera() {
   // set up camera
   // parameters are eye point, aim point, up vector
   camera = new Camera(Vector3d(0, 5, 5), Vector3d(0, 0, 0),
 		      Vector3d(0, 1, 0));
-
-//  camera->Initialize();
 
   // grey background for window
   glClearColor(0.62, 0.62, 0.62, 0.0f);
@@ -184,22 +177,41 @@ void init() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void PerspDisplay() {
+void initSimulation() {
+  solver = new Solver(4.0f, 4.0f, 4.0f, Vector3d(0.0f, 0.0f, 0.0f), 0.2f, 0.1f);
+}
+
+void simulateBall() {
+  solver->update();
+  glutPostRedisplay();
+}
+
+void perspDisplay() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // draw the camera created in perspective
   camera->PerspectiveDisplay(WIDTH, HEIGHT);
 
+
+
+//  cout << camera->Aim.x << " " << camera->Aim.y << " " << camera->Aim.z << endl;
+//  cout << camera->TranslateX << " " << camera->TranslateY << endl;
+//  cout << camera->CurrentAzim << " " << camera->CurrentElev << endl;
+
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  if (showGrid) 
+  if (showGrid)
     makeGrid();
-  
-  //
-  // here is where you would draw your scene!
-  //
+
   makeBox();
+
+  glPointSize(10.0f);
+  glBegin(GL_POINTS);
+  glColor3f(1.0f, 0.5f, 1.0f);
+  glVertex3f(solver->ball->pos.x, solver->ball->pos.y, solver->ball->pos.z);
+  glEnd();
+
   glFlush();
   glutSwapBuffers();
 }
@@ -222,14 +234,46 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
     // reset the camera to its initial position
     camera->Reset();
     break;
+
   case 'f': case 'F':
     camera->SetCenterOfFocus(Vector3d(0, 0, 0));
     break;
+
   case 'g': case 'G':
     showGrid = !showGrid;
     break;
-      
-  case 'q': case 'Q':	// q or esc - quit
+
+  case 'w':
+    solver->acceleration = {0.0f, 9.8f, 0.0f};
+    cout << "Gravity is now up" << endl;
+    break;
+
+  case 'a':
+    solver->acceleration = {-9.8f, 0.0f, 0.0f};
+    cout << "Gravity is now left" << endl;
+    break;
+
+  case 's':
+    solver->acceleration = {0.0f, -9.8f, 0.0f};
+    cout << "Gravity is now down" << endl;
+    break;
+
+  case 'd':
+    solver->acceleration = {0.0f, 9.8f, 0.0f};
+    cout << "Gravity is now right" << endl;
+    break;
+
+  case 'z':
+    solver->acceleration = {0.0f, 0.0f, 9.8f};
+    cout << "Gravity is now forward" << endl;
+    break;
+
+  case 'x':
+    solver->acceleration = {0.0f, 0.0f, -9.8f};
+    cout << "Gravity is now back" << endl;
+    break;
+
+    case 'q': case 'Q':	// q or esc - quit
   case 27:		// esc
     exit(0);
   }
@@ -247,13 +291,16 @@ int main(int argc, char *argv[]) {
   persp_win = glutCreateWindow("Camera Test");
 
   // initialize the camera and such
-  init();
+  initCamera();
+  initSimulation();
 
   // set up opengl callback functions
-  glutDisplayFunc(PerspDisplay);
+  glutDisplayFunc(perspDisplay);
+  glutIdleFunc(simulateBall);
   glutMouseFunc(mouseEventHandler);
   glutMotionFunc(motionEventHandler);
   glutKeyboardFunc(keyboardEventHandler);
+
 
   glutMainLoop();
   return(0);
