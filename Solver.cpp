@@ -23,16 +23,14 @@ Solver::Solver(double box_width, double box_height, double box_depth,
 
 int Solver::detectCollision(Vector3d ball_pos, Vector3d new_ball_pos, double *s) {
   int collision_wall = -1; // -1 indicates no collision
-  bool collision_occurred = false;
   Vector3d wall_location;
   Vector3d wall_normal;
   Vector3d point_on_ball;
   Vector3d point_on_new_ball;
   double distance_to_wall, total_distance;
-  double min_s = 2.0f;
+  double min_s = 2.0f; // set min_s to a number arbitrarilly greater than 1.0
   double temp_s;
   double epsilon = 0.00000001f; // used to avoid division by zero
-//  int collisions = 0;
 
   for (int i=0; i < 6; ++i) {
     wall_location = box->wall_locations[i];
@@ -48,22 +46,14 @@ int Solver::detectCollision(Vector3d ball_pos, Vector3d new_ball_pos, double *s)
     if (abs(total_distance) < epsilon) // avoid division by zero
       continue;
 
+    // find the first collision to occur
     temp_s = distance_to_wall / total_distance;
-    if (temp_s >= 0.0f && temp_s < 1.0f) {
-      collision_occurred = true;
-      collision_wall = i;
-//      collisions++;
-      if (temp_s < min_s)
+    if (temp_s >= 0.0f && temp_s < 1.0f && temp_s < min_s) {
+        *s = temp_s;
+        collision_wall = i;
         min_s = temp_s;
     }
   }
-
-//  if (collisions >= 2) {
-//    std::cout << "\ndouble collision\n" << std::endl;
-//  }
-
-  if (collision_occurred)
-    *s = min_s;
 
   return collision_wall;
 }
@@ -73,21 +63,13 @@ void Solver::update() {
   Vector3d pos_new, pos_collision,
            velocity_new, velocity_collison,
            velocity_normal, velocity_tangent;
-  double timestep_remaining = h;
-  double timestep = timestep_remaining; // try to simulate a full timestep
   int collision_wall;
   double s; // fraction between distance of wall to ball
            // and total distance travelled in normal direction
 
-
   acceleration = gravity - ((ar/ball->mass) * ball->velocity);
   velocity_new = ball->velocity + acceleration * h;
   pos_new = ball->pos + velocity_new * h;
-
-//  if (ball->pos.normsqr() > 8.0f && pos_new.normsqr() > 8.0f) {
-//    std::cout << "outside box" << std::endl;
-//    std::cout << ball->pos.normsqr() << " " << pos_new.normsqr() << std::endl;
-//  }
 
   collision_wall = detectCollision(ball->pos, pos_new, &s);
   if (collision_wall != -1) { // collision occurred!

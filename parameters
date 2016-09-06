@@ -5,7 +5,7 @@ Ball Position X, Ball Position Y, Ball Position Z, Ball Radius, Ball Mass
               0                0                0          0.8        1.0
 
 Time Step, Substeps
-  0.00004       500
+ 0.000075       500
 
 Coeff of Restitution, Coeff of Friction, Coeff of Wind Resistance
-                 0.9                0.3                       0.5
+                0.95                0.3                       0.2

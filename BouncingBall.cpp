@@ -18,15 +18,15 @@
 #  include <GL/glut.h>
 #endif
 
-int WIDTH = 640;
-int HEIGHT = 480;
+int WIDTH = 1280;
+int HEIGHT = 720;
 
 int persp_win;
 
 Camera *camera;
 Solver *solver;
 
-bool showGrid = true;
+bool showGrid = false;
 
 // draws a simple grid
 void makeGrid() {
@@ -72,6 +72,7 @@ void makeGrid() {
   glLineWidth(1.0f);
 }
 
+// TODO Base this function off of the azim and elev of camera.
 void getVisibleFaces(bool *visible_faces, std::vector<Vector3d> face_positions) {
   // set max distance to camera to the distance from the front face to the camera
   double test_distance_to_camera;
@@ -213,7 +214,7 @@ void initSimulation(char *param_filename) {
   fgets(skipline_buffer, 1024, paramfile);
   fgets(skipline_buffer, 1024, paramfile);
   fgets(skipline_buffer, 1024, paramfile);
-  if(fscanf(paramfile, "%lf %lf",
+  if(fscanf(paramfile, "%lf %d",
             &timestep, &substeps) != 2){
     fprintf(stderr, "error reading parameter file %s\n", param_filename);
     exit(1);
@@ -236,7 +237,7 @@ void initSimulation(char *param_filename) {
 }
 
 void simulateBall() {
-  for(int i = 0; i < 500; ++i) {
+  for(int i = 0; i < solver->substeps; ++i) {
     solver->update();
   }
   glutPostRedisplay();
@@ -248,12 +249,6 @@ void perspDisplay() {
 
   // draw the camera created in perspective
   camera->PerspectiveDisplay(WIDTH, HEIGHT);
-
-
-
-//  cout << camera->Aim.x << " " << camera->Aim.y << " " << camera->Aim.z << endl;
-//  cout << camera->TranslateX << " " << camera->TranslateY << endl;
-//  cout << camera->CurrentAzim << " " << camera->CurrentElev << endl;
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
