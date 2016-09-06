@@ -26,7 +26,7 @@ For this assignment, the object is to get everyone on a firm footing with the ba
 
 ## Usage
 ```
-$> bouncing_ball parameters
+$> BouncingBall parameters
 ```
 
 ## Interaction

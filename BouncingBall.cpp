@@ -336,7 +336,7 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
 int main(int argc, char *argv[]) {
 
   if(argc != 2){
-    fprintf(stderr, "usage: bouncing_ball paramfile\n");
+    fprintf(stderr, "usage: BouncingBall paramfile\n");
     exit(1);
   }
 
