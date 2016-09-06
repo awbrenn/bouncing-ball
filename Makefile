@@ -12,7 +12,7 @@
 CC      = g++
 C	= cpp
 H	= h
-CFLAGS 	= -g
+CFLAGS 	= -g -std=c++11
 
 ifeq ("$(shell uname)", "Darwin")
   LDFLAGS     = -framework Foundation -framework GLUT -framework OpenGL -lm
@@ -22,8 +22,8 @@ else
   endif
 endif
 
-HFILES 	= Matrix.${H} Vector.${H} Utility.${H} Camera.${H}
-OFILES 	= Matrix.o Vector.o Utility.o Camera.o
+HFILES 	= Matrix.${H} Vector.${H} Utility.${H} Camera.${H} Solver.${H} Ball.${H} Box.${H}
+OFILES 	= Matrix.o Vector.o Utility.o Camera.o Solver.o Ball.o Box.o
 PROJECT = BouncingBall
 
 ${PROJECT}:	${PROJECT}.o $(OFILES)
@@ -31,6 +31,15 @@ ${PROJECT}:	${PROJECT}.o $(OFILES)
 
 ${PROJECT}.o: ${PROJECT}.${C} $(HFILES)
 	${CC} $(CFLAGS) -c ${PROJECT}.${C}
+
+Solver.o: Solver.${C} Solver.${H} Matrix.${H} Vector.${H} Ball.${H} Box.${H}
+	${CC} $(CFLAGS) -c Solver.${C}
+
+Box.o: Box.${C} Box.${H} Matrix.${H} Vector.${H}
+	${CC} $(CFLAGS) -c Box.${C}
+
+Ball.o: Ball.${C} Ball.${H} Matrix.${H} Vector.${H}
+	${CC} $(CFLAGS) -c Ball.${C}
 
 Camera.o: Camera.${C} Camera.${H} Matrix.${H} Vector.${H} Utility.${H} 
 	${CC} $(CFLAGS) -c Camera.${C}
