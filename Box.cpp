@@ -5,6 +5,9 @@
 #include "Box.h"
 
 Box::Box(double width, double height, double depth) {
+  w = width;
+  h = height;
+  d = depth;
   width /= 2;
   height /= 2;
   depth /= 2;

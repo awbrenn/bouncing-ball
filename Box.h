@@ -10,6 +10,9 @@
 
 class Box {
   public:
+    double w; // width
+    double h; // height
+    double d; // depth
     std::vector<Vector3d> wall_locations;
     std::vector<Vector3d> wall_normals;
 

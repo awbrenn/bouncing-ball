@@ -92,15 +92,18 @@ void getVisibleFaces(bool *visible_faces, std::vector<Vector3d> face_positions) 
 void makeBox() {
   bool visible_faces[6] = {true, true, true, true, true, true};
   getVisibleFaces(visible_faces, solver->box->wall_locations);
+  float w = (float) solver->box->w / 2.0f;
+  float h = (float) solver->box->h / 2.0f;
+  float d = (float) solver->box->d / 2.0f;
 
   if (visible_faces[0]) {
     // back face
     glBegin(GL_POLYGON);
     glColor3f(0.0f, 0.0f, 0.0f);
-    glVertex3f(2.0f, -2.0f, -2.0f);
-    glVertex3f(2.0f, 2.0f, -2.0f);
-    glVertex3f(-2.0f, 2.0f, -2.0f);
-    glVertex3f(-2.0f, -2.0f, -2.0f);
+    glVertex3f(w, -1.0f * h, -1.0f * d);
+    glVertex3f(w, h, -1.0f * d);
+    glVertex3f(-1.0f * w, h, -1.0f * d);
+    glVertex3f(-1.0f * w, -1.0f * h, -1.0f * d);
     glEnd();
   }
 
@@ -108,10 +111,10 @@ void makeBox() {
     // front face
     glBegin(GL_POLYGON);
     glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex3f(2.0f, -2.0f, 2.0f);
-    glVertex3f(2.0f, 2.0f, 2.0f);
-    glVertex3f(-2.0f, 2.0f, 2.0f);
-    glVertex3f(-2.0f, -2.0f, 2.0f);
+    glVertex3f(w, -1.0f * h, d);
+    glVertex3f(w, h, d);
+    glVertex3f(-1.0f * w, h, d);
+    glVertex3f(-1.0f * w, -1.0f * h, d);
     glEnd();
   }
 
@@ -119,10 +122,10 @@ void makeBox() {
     // right face
     glBegin(GL_POLYGON);
     glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(2.0f, -2.0f, -2.0f);
-    glVertex3f(2.0f, 2.0f, -2.0f);
-    glVertex3f(2.0f, 2.0f, 2.0f);
-    glVertex3f(2.0f, -2.0f, 2.0f);
+    glVertex3f(w, -1.0f * h, -1.0f * d);
+    glVertex3f(w, h, -1.0f * d);
+    glVertex3f(w, h, d);
+    glVertex3f(w, -1.0f * h, d);
     glEnd();
   }
 
@@ -130,10 +133,10 @@ void makeBox() {
     // left face
     glBegin(GL_POLYGON);
     glColor3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-2.0f, -2.0f, 2.0);
-    glVertex3f(-2.0f, 2.0f, 2.0f);
-    glVertex3f(-2.0f, 2.0, -2.0f);
-    glVertex3f(-2.0f, -2.0f, -2.0f);
+    glVertex3f(-1.0f * w, -1.0f * h, d);
+    glVertex3f(-1.0f * w, h, d);
+    glVertex3f(-1.0f * w, h, -1.0f * d);
+    glVertex3f(-1.0f * w, -1.0f * h, -1.0f * d);
     glEnd();
   }
 
@@ -141,10 +144,10 @@ void makeBox() {
     // top face
     glBegin(GL_POLYGON);
     glColor3f(0.0f, 1.0f, 1.0f);
-    glVertex3f(2.0f, 2.0f, 2.0f);
-    glVertex3f(2.0f, 2.0f, -2.0f);
-    glVertex3f(-2.0f, 2.0f, -2.0f);
-    glVertex3f(-2.0f, 2.0f, 2.0f);
+    glVertex3f(w, h, d);
+    glVertex3f(w, h, -1.0f * d);
+    glVertex3f(-1.0f * w, h, -1.0f * d);
+    glVertex3f(-1.0f * w, h, d);
     glEnd();
   }
 
@@ -152,10 +155,10 @@ void makeBox() {
     // bottom face
     glBegin(GL_POLYGON);
     glColor3f(1.0f, 1.0f, 0.0f);
-    glVertex3f(2.0f, -2.0f, -2.0f);
-    glVertex3f(2.0f, -2.0f, 2.0f);
-    glVertex3f(-2.0f, -2.0f, 2.0f);
-    glVertex3f(-2.0f, -2.0f, -2.0f);
+    glVertex3f(w, -1.0f * h, -1.0f * d);
+    glVertex3f(w, -1.0f * h, d);
+    glVertex3f(-1.0f * w, -1.0f * h, d);
+    glVertex3f(-1.0f * w, -1.0f * h, -1.0f * d);
     glEnd();
   }
 }
@@ -181,20 +184,45 @@ void initCamera() {
 void initSimulation(char *param_filename) {
   FILE *paramfile;
   double box_width, box_height, box_depth,
-         ball_x, ball_y, ball_z, ball_radius,
-         timestep, coeff_restitution, coeff_friction;
+         ball_x, ball_y, ball_z, ball_radius, ball_mass,
+         timestep, coeff_restitution, coeff_friction,
+         coeff_air_resistance;
   int substeps;
+  char skipline_buffer[1024];
+  char *skipline;
 
   if((paramfile = std::fopen(param_filename, "r")) == NULL) {
     fprintf(stderr, "error opening parameter file %s", param_filename);
     exit(1);
   }
 
-  if(fscanf(paramfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-            &box_width, &box_height, &box_depth,
-            &ball_x, &ball_y, &ball_z,
-            &ball_radius, &timestep, &substeps,
-            &coeff_restitution, &coeff_friction) != 11){
+  fgets(skipline_buffer, 1024, paramfile);
+  if(fscanf(paramfile, "%lf %lf %lf",
+            &box_width, &box_height, &box_depth) != 3){
+    fprintf(stderr, "error reading parameter file %s\n", param_filename);
+    exit(1);
+  }
+  fgets(skipline_buffer, 1024, paramfile);
+  fgets(skipline_buffer, 1024, paramfile);
+  fgets(skipline_buffer, 1024, paramfile);
+  if(fscanf(paramfile, "%lf %lf %lf %lf %lf",
+            &ball_x, &ball_y, &ball_z, &ball_radius, &ball_mass) != 5){
+    fprintf(stderr, "error reading parameter file %s\n", param_filename);
+    exit(1);
+  }
+  fgets(skipline_buffer, 1024, paramfile);
+  fgets(skipline_buffer, 1024, paramfile);
+  fgets(skipline_buffer, 1024, paramfile);
+  if(fscanf(paramfile, "%lf %lf",
+            &timestep, &substeps) != 2){
+    fprintf(stderr, "error reading parameter file %s\n", param_filename);
+    exit(1);
+  }
+  fgets(skipline_buffer, 1024, paramfile);
+  fgets(skipline_buffer, 1024, paramfile);
+  fgets(skipline_buffer, 1024, paramfile);
+  if(fscanf(paramfile, "%lf %lf %lf",
+            &coeff_restitution, &coeff_friction, &coeff_air_resistance) != 3){
     fprintf(stderr, "error reading parameter file %s\n", param_filename);
     exit(1);
   }
@@ -203,8 +231,8 @@ void initSimulation(char *param_filename) {
 
   solver = new Solver(box_width, box_height, box_depth,
                       Vector3d(ball_x, ball_y, ball_z),
-                      ball_radius, timestep, substeps,
-                      coeff_restitution, coeff_friction);
+                      ball_radius, ball_mass, timestep, substeps,
+                      coeff_restitution, coeff_friction, coeff_air_resistance);
 }
 
 void simulateBall() {
@@ -273,32 +301,32 @@ void keyboardEventHandler(unsigned char key, int x, int y) {
     break;
 
   case 'w':
-    solver->acceleration = {0.0f, 9.8f, 0.0f};
+    solver->gravity = {0.0f, 9.8f, 0.0f};
     cout << "Gravity is now up" << endl;
     break;
 
   case 'a':
-    solver->acceleration = {-9.8f, 0.0f, 0.0f};
+    solver->gravity = {-9.8f, 0.0f, 0.0f};
     cout << "Gravity is now left" << endl;
     break;
 
   case 's':
-    solver->acceleration = {0.0f, -9.8f, 0.0f};
+    solver->gravity = {0.0f, -9.8f, 0.0f};
     cout << "Gravity is now down" << endl;
     break;
 
   case 'd':
-    solver->acceleration = {9.8f, 0.0f, 0.0f};
+    solver->gravity = {9.8f, 0.0f, 0.0f};
     cout << "Gravity is now right" << endl;
     break;
 
   case 'z':
-    solver->acceleration = {0.0f, 0.0f, 9.8f};
+    solver->gravity = {0.0f, 0.0f, 9.8f};
     cout << "Gravity is now forward" << endl;
     break;
 
   case 'x':
-    solver->acceleration = {0.0f, 0.0f, -9.8f};
+    solver->gravity = {0.0f, 0.0f, -9.8f};
     cout << "Gravity is now back" << endl;
     break;
 
@@ -322,7 +350,7 @@ int main(int argc, char *argv[]) {
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
   glutInitWindowSize(WIDTH, HEIGHT);
   glutInitWindowPosition(50, 50);
-  persp_win = glutCreateWindow("Camera Test");
+  persp_win = glutCreateWindow("Ball Bouncing in 6 Sided Box");
 
   // initialize the camera and such
   initCamera();

@@ -7,14 +7,17 @@
 
 
 Solver::Solver(double box_width, double box_height, double box_depth,
-               Vector3d ball_position, double ball_radius, double H,
-               int Substeps, double coeff_restitution, double coeff_friction) {
+               Vector3d ball_position, double ball_radius, double ball_mass, double H,
+               int Substeps, double coeff_restitution, double coeff_friction,
+               double coeff_air_resistance) {
   box = new Box(box_width, box_height, box_depth);
-  ball = new Ball(ball_position, ball_radius);
+  ball = new Ball(ball_position, ball_radius, ball_mass);
   h = H;
   substeps = Substeps;
   cr = coeff_restitution;
   cf = coeff_friction;
+  ar = coeff_air_resistance;
+  acceleration = gravity;
 }
 
 
@@ -28,7 +31,7 @@ int Solver::detectCollision(Vector3d ball_pos, Vector3d new_ball_pos, double *s)
   double distance_to_wall, total_distance;
   double min_s = 2.0f;
   double temp_s;
-  double epsilon = DBL_MIN; // used to avoid division by zero
+  double epsilon = 0.00000001f; // used to avoid division by zero
 //  int collisions = 0;
 
   for (int i=0; i < 6; ++i) {
@@ -77,13 +80,14 @@ void Solver::update() {
            // and total distance travelled in normal direction
 
 
+  acceleration = gravity - ((ar/ball->mass) * ball->velocity);
   velocity_new = ball->velocity + acceleration * h;
   pos_new = ball->pos + velocity_new * h;
 
-  if (ball->pos.normsqr() > 8.0f && pos_new.normsqr() > 8.0f) {
-    std::cout << "outside box" << std::endl;
-    std::cout << ball->pos.normsqr() << " " << pos_new.normsqr() << std::endl;
-  }
+//  if (ball->pos.normsqr() > 8.0f && pos_new.normsqr() > 8.0f) {
+//    std::cout << "outside box" << std::endl;
+//    std::cout << ball->pos.normsqr() << " " << pos_new.normsqr() << std::endl;
+//  }
 
   collision_wall = detectCollision(ball->pos, pos_new, &s);
   if (collision_wall != -1) { // collision occurred!
