@@ -98,6 +98,7 @@ void Solver::update() {
     velocity_normal = -1.0 * cr * velocity_normal;
     velocity_tangent = (1.0f - cf) * velocity_tangent;
     velocity_collison = velocity_normal + velocity_tangent;
+    acceleration = gravity - ((ar/ball->mass) * velocity_collison);
     ball->velocity = velocity_collison + (1 - s) * h * acceleration;
     ball->pos = pos_collision + (1.0f - s) * h * velocity_collison;
   }
