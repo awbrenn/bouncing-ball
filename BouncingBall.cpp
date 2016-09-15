@@ -1,11 +1,6 @@
 //
-// CameraExample.cpp
-//
-// Example program to show how to use Chris Root's OpenGL Camera Class
-// 
-// Christopher Root, 2006
-// Minor Modifications by Donald House, 2009
-// Minor Modifications by Yujie Shu, 2012
+// Author: Austin Brennan
+// Date: September 5th, 2016
 //
 #include "Camera.h"
 #include "Solver.h"
